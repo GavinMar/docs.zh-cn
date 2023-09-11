@@ -8,7 +8,7 @@
 
 ## 原理
 
-StarRocks 将远端存储文件缓存至本地 BE 节点时，会将原始文件按照一定策略切分为相等大小的 block。block 是数据缓存的最小单元，大小可配置。当配置block大小为1M时，例如，查询 Amazon S3 上一个 128 MB 的 Parquet 文件，StarRocks 会按照1 MB 的步长，将该文件拆分成相等的 128 个 block，即 [0, 1 MB)、[1 MB, 2 MB)、[2 MB, 3 MB) ... [127 MB, 128 MB)，并为每个 block 分配一个全局唯一 ID，即 cache key。Cache key 由三部分组成。
+StarRocks 将远端存储文件缓存至本地 BE 节点时，会将原始文件按照一定策略切分为相等大小的 block。block 是数据缓存的最小单元，大小可配置。当配置 block 大小为 1 MB 时，如果查询 Amazon S3 上一个 128 MB 的 Parquet 文件，StarRocks 会按照 1 MB 的步长，将该文件拆分成相等的 128 个 block，即 [0, 1 MB)、[1 MB, 2 MB)、[2 MB, 3 MB) ... [127 MB, 128 MB)，并为每个 block 分配一个全局唯一 ID，即 cache key。Cache key 由三部分组成。
 
 ```Plain
 hash(filename) + fileModificationTime + blockId
@@ -37,8 +37,8 @@ SET enable_populate_block_cache = false;
 
 ## 缓存介质
 
-StarRocks 以 BE 节点的内存/磁盘作为缓存的存储介质，支持全内存缓存或者内存+磁盘的两级缓存。
-注意，当使用磁盘作为缓存介质时，缓存加速效果和磁盘本身性能直接相关，建议使用高性能本地磁盘（如本地 NVMe 盘）进行数据缓存。如果磁盘本身性能一般，也可通过增加多块盘来减少单盘IO压力。
+StarRocks 以 BE 节点的内存和磁盘作为缓存的存储介质，支持全内存缓存或者内存+磁盘的两级缓存。
+注意，当使用磁盘作为缓存介质时，缓存加速效果和磁盘本身性能直接相关，建议使用高性能本地磁盘（如本地 NVMe 盘）进行数据缓存。如果磁盘本身性能一般，也可通过增加多块盘来减少单盘 I/O 压力。
 
 ## 缓存淘汰机制
 
@@ -74,10 +74,10 @@ Data Cache 默认关闭。如要启用，则需要在 FE 和 BE 中同时进行�
 | **参数**               | **说明**                                                     |**默认值** |
 | ---------------------- | ------------------------------------------------------------ |----------|
 | block_cache_enable     | 是否启用 Data Cache。<ul><li>`true`：启用。</li><li>`false`：不启用。| false |
-| block_cache_disk_path  | 磁盘路径。支持添加多个路径，多个路径之间使用分号(;) 隔开。建议 BE 机器有几个磁盘即添加几个路径。BE进程启动时会自动创建配置的磁盘缓存目录（当父目录不存在时创建失败）。 | ${STARROCKS_HOME}/block_cache |
+| block_cache_disk_path  | 磁盘路径。支持添加多个路径，多个路径之间使用分号(;) 隔开。建议 BE 机器有几个磁盘即添加几个路径。BE 进程启动时会自动创建配置的磁盘缓存目录（当父目录不存在时创建失败）。 | ${STARROCKS_HOME}/block_cache |
 | block_cache_meta_path  | Block 的元数据存储目录，一般无需配置。 | ${STARROCKS_HOME}/block_cache |
-| block_cache_mem_size   | 内存缓存数据量的上限，单位：字节。推荐将该参数值最低设置成 20 GB。如在开启 Data Cache 期间，存在大量从磁盘读取数据的情况，可考虑调大该参数。 | 2147483648，即2 GB |
-| block_cache_disk_size  | 单个磁盘缓存数据量的上限，单位：字节。举例：在 `block_cache_disk_path` 中配置了 2 个磁盘，并设置 `block_cache_disk_size` 参数值为 `21474836480`，即 20 GB，那么最多可缓存 40 GB 的磁盘数据。| 0，表示仅使用内存作为缓存介质，不使用磁盘 |
+| block_cache_mem_size   | 内存缓存数据量的上限，单位：字节。推荐将该参数值最低设置成 20 GB。如在开启 Data Cache 期间，存在大量从磁盘读取数据的情况，可考虑调大该参数。 | 2147483648，即 2 GB |
+| block_cache_disk_size  | 单个磁盘缓存数据量的上限，单位：字节。举例：在 `block_cache_disk_path` 中配置了 2 个磁盘，并设置 `block_cache_disk_size` 参数值为 `21474836480`，即 20 GB，那么最多可缓存 40 GB 的磁盘数据。| 0 表示仅使用内存作为缓存介质，不使用磁盘。 |
 
 示例如下：
 
